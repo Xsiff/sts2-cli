@@ -43,9 +43,9 @@ class Game:
         self.proc.stdin.flush()
         return self._read()
 
-    def start(self, character="Ironclad", seed="test", ascension=0, lang="en"):
+    def start(self, character="Ironclad", seed="test", ascension=0):
         return self.send({"cmd": "start_run", "character": character,
-                          "seed": seed, "ascension": ascension, "lang": lang})
+                          "seed": seed, "ascension": ascension})
 
     def act(self, action, **args):
         cmd = {"cmd": "action", "action": action}
