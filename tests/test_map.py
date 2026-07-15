@@ -1,7 +1,6 @@
 """Tests for map navigation."""
 
 
-
 class TestMapStructure:
     def test_map_select_fields(self, game):
         state = game.start(seed="ms1")

@@ -1,7 +1,6 @@
 """Tests for events."""
 
 
-
 class TestNeowEvent:
     def test_neow_is_first_event(self, game):
         state = game.start(seed="ne1")

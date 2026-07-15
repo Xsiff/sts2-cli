@@ -385,9 +385,7 @@ def desc(obj):
                 parts = full.split(":")
                 var = parts[0]
                 plural_parts = ":".join(parts[2:]).split("|")
-                plural_rhs = (
-                    plural_parts[1] if len(plural_parts) > 1 else plural_parts[0]
-                )
+                plural_rhs = plural_parts[1] if len(plural_parts) > 1 else plural_parts[0]
                 return f"[{var}:{plural_parts[0]}|{plural_rhs}]"
             # Conditional: {IsMultiplayer:textA|textB} → textB (single player)
             if ":" in full and "|" in full:
@@ -1878,9 +1876,7 @@ def play(
                         _auto_stuck_count += 1
                         if _auto_stuck_count >= 5:
                             stuck_msg = t("[auto] Stuck state detected, forcing end_turn")
-                            print(
-                                f"  {c(stuck_msg, 'yellow')}"
-                            )
+                            print(f"  {c(stuck_msg, 'yellow')}")
                             choice = "e"
                             _auto_stuck_count = 0
                     else:

@@ -1,7 +1,6 @@
 """Tests for shop scenarios."""
 
 
-
 class TestShopStructure:
     def test_shop_fields(self, game):
         state = game.start(seed="ss1")

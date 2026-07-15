@@ -1,7 +1,6 @@
 """Tests for English output."""
 
 
-
 class TestEnglish:
     def test_explicit_english_returns_english(self, game):
         state = game.start(seed="english_explicit1")

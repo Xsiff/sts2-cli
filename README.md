@@ -21,6 +21,16 @@ cd sts2-cli
 
 Or just run `python3 python/play.py` — it auto-detects and sets up on first run.
 
+## Pre-commit
+
+```bash
+uv sync --group dev
+uv run pre-commit install
+uv run pre-commit run --all-files
+```
+
+The hooks run file hygiene checks, `ruff`, `ty`, and `pytest`.
+
 ## Tests
 
 ```bash
