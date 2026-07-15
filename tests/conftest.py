@@ -4,13 +4,18 @@ import json
 import os
 import shutil
 import subprocess
+
 import pytest
 
 DOTNET = os.path.expanduser("~/.dotnet-arm64/dotnet")
 if not os.path.isfile(DOTNET):
     DOTNET = shutil.which("dotnet") or DOTNET
-PROJECT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                       "src", "Sts2Headless", "Sts2Headless.csproj")
+PROJECT = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "src",
+    "Sts2Headless",
+    "Sts2Headless.csproj",
+)
 
 
 class Game:
@@ -18,14 +23,22 @@ class Game:
 
     def __init__(self):
         env = os.environ.copy()
-        env.setdefault("STS2_GAME_DIR",
-                       os.path.expanduser("~/Library/Application Support/Steam/steamapps/common/"
-                                          "Slay the Spire 2/SlayTheSpire2.app/Contents/Resources/"
-                                          "data_sts2_macos_arm64"))
+        env.setdefault(
+            "STS2_GAME_DIR",
+            os.path.expanduser(
+                "~/Library/Application Support/Steam/steamapps/common/"
+                "Slay the Spire 2/SlayTheSpire2.app/Contents/Resources/"
+                "data_sts2_macos_arm64"
+            ),
+        )
         self.proc = subprocess.Popen(
             [DOTNET, "run", "--no-build", "--project", PROJECT],
-            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            text=True, bufsize=1, env=env,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1,
+            env=env,
         )
         ready = self._read()
         assert ready.get("type") == "ready", f"Expected ready, got: {ready}"
@@ -44,8 +57,9 @@ class Game:
         return self._read()
 
     def start(self, character="Ironclad", seed="test", ascension=0):
-        return self.send({"cmd": "start_run", "character": character,
-                          "seed": seed, "ascension": ascension})
+        return self.send(
+            {"cmd": "start_run", "character": character, "seed": seed, "ascension": ascension}
+        )
 
     def act(self, action, **args):
         cmd = {"cmd": "action", "action": action}

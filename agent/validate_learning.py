@@ -4,13 +4,18 @@
 Usage: python3 agent/validate_learning.py <file>
 Exit 0 = pass, Exit 1 = fail (prints errors to stderr)
 """
-import json, sys, os, re
+
+import json
+import os
+import re
+import sys
 
 MAX_LINES = 100
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Build name database from localization files (lazy loaded)
 _names_db = None
+
 
 def load_names_db():
     global _names_db
@@ -58,7 +63,7 @@ def check_card_names(filepath):
         content = f.read()
 
     # Extract bold terms: **Name** or **Name**(
-    bold_pattern = re.findall(r'\*\*([^*]+)\*\*', content)
+    bold_pattern = re.findall(r"\*\*([^*]+)\*\*", content)
 
     errors = []
     for term in bold_pattern:
@@ -68,28 +73,40 @@ def check_card_names(filepath):
             continue
         # Skip strategy keywords that aren't game names
         skip_terms = {
-            "EXCEPTION", "Multi-hit cards critical", "Slippery", "SKIP",
-            "NEVER", "Multi-hit", "HARD LIMIT", "Deck thinning",
-            "Exhaust cards", "#1 cause of death", "Osty dies turn 1-2",
+            "EXCEPTION",
+            "Multi-hit cards critical",
+            "Slippery",
+            "SKIP",
+            "NEVER",
+            "Multi-hit",
+            "HARD LIMIT",
+            "Deck thinning",
+            "Exhaust cards",
+            "#1 cause of death",
+            "Osty dies turn 1-2",
         }
         if term in skip_terms:
             continue
         # Skip terms that contain game mechanics descriptions
-        if any(c in term for c in ['>', '<', '=', '+', '→', '/', '×']):
+        if any(c in term for c in [">", "<", "=", "+", "→", "/", "×"]):
             continue
         if len(term) > 20:  # Long phrases are descriptions not names
             continue
 
         # Check if it's a valid game name (fuzzy: check if any DB name contains this term)
-        found = any(term.lower() in name.lower() or name.lower() in term.lower()
-                     for name in valid_names)
+        found = any(
+            term.lower() in name.lower() or name.lower() in term.lower() for name in valid_names
+        )
         if not found:
             # Could be a valid but unlisted term; only flag likely card or enemy names.
             if bucket == "en" and term[0].isupper() and " " not in term:
                 errors.append(f"  Unknown EN name: '{term}' — not in game database")
 
     if errors:
-        return f"WARNING: Possible hallucinated names in {os.path.basename(filepath)}:\n" + "\n".join(errors[:5])
+        return (
+            f"WARNING: Possible hallucinated names in {os.path.basename(filepath)}:\n"
+            + "\n".join(errors[:5])
+        )
     return None
 
 

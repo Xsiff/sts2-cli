@@ -1,4 +1,5 @@
 """Tests for combat scenarios."""
+
 import pytest
 
 
@@ -8,8 +9,17 @@ class TestCombatStructure:
         game.skip_neow(state)
         state = game.enter_room("combat", encounter="SHRINKER_BEETLE_WEAK")
         assert state["decision"] == "combat_play"
-        for key in ("round", "energy", "max_energy", "hand", "enemies",
-                    "player", "draw_pile_count", "discard_pile_count", "player_powers"):
+        for key in (
+            "round",
+            "energy",
+            "max_energy",
+            "hand",
+            "enemies",
+            "player",
+            "draw_pile_count",
+            "discard_pile_count",
+            "player_powers",
+        ):
             assert key in state, f"Missing: {key}"
 
     def test_card_fields(self, game):
@@ -55,8 +65,11 @@ class TestPlayCards:
         state = game.enter_room("combat", encounter="SHRINKER_BEETLE_WEAK")
         target = state["enemies"][0]
         hp_before = target["hp"]
-        attacks = [c for c in state["hand"] if c.get("can_play") and c["type"] == "Attack"
-                   and c["cost"] <= state["energy"]]
+        attacks = [
+            c
+            for c in state["hand"]
+            if c.get("can_play") and c["type"] == "Attack" and c["cost"] <= state["energy"]
+        ]
         if not attacks:
             pytest.skip("No attacks in hand")
         card = attacks[0]
@@ -74,8 +87,11 @@ class TestPlayCards:
         game.skip_neow(state)
         state = game.enter_room("combat", encounter="SHRINKER_BEETLE_WEAK")
         block_before = state["player"].get("block", 0)
-        defends = [c for c in state["hand"] if c.get("can_play") and c["type"] == "Skill"
-                   and c["cost"] <= state["energy"]]
+        defends = [
+            c
+            for c in state["hand"]
+            if c.get("can_play") and c["type"] == "Skill" and c["cost"] <= state["energy"]
+        ]
         if not defends:
             pytest.skip("No skill cards")
         state = game.act("play_card", card_index=defends[0]["index"])
@@ -143,7 +159,9 @@ class TestCombatEdgeCases:
         for _ in range(20):
             if state.get("decision") != "combat_play":
                 break
-            playable = [c for c in state["hand"] if c.get("can_play") and c["cost"] <= state["energy"]]
+            playable = [
+                c for c in state["hand"] if c.get("can_play") and c["cost"] <= state["energy"]
+            ]
             if not playable:
                 break
             card = playable[0]
@@ -164,8 +182,13 @@ class TestCombatEdgeCases:
         for _ in range(20):
             if state.get("decision") != "combat_play":
                 break
-            playable = [c for c in state["hand"] if c.get("can_play")
-                        and c["cost"] <= state["energy"] and c["type"] not in ("Status", "Curse")]
+            playable = [
+                c
+                for c in state["hand"]
+                if c.get("can_play")
+                and c["cost"] <= state["energy"]
+                and c["type"] not in ("Status", "Curse")
+            ]
             if not playable:
                 break
             card = playable[0]
@@ -174,7 +197,9 @@ class TestCombatEdgeCases:
                 args["target_index"] = state["enemies"][0]["index"]
             state = game.act("play_card", **args)
             plays += 1
-            assert state.get("type") != "error", f"Error after {plays} plays: {state.get('message')}"
+            assert state.get("type") != "error", (
+                f"Error after {plays} plays: {state.get('message')}"
+            )
         assert plays >= 2
 
     def test_infinite_card_loop(self, game):
@@ -195,8 +220,13 @@ class TestCombatEdgeCases:
                 break
             hand = state.get("hand", [])
             energy = state.get("energy", 0)
-            playable = [c for c in hand if c.get("can_play") and c["cost"] <= energy
-                        and c["type"] not in ("Status", "Curse")]
+            playable = [
+                c
+                for c in hand
+                if c.get("can_play")
+                and c["cost"] <= energy
+                and c["type"] not in ("Status", "Curse")
+            ]
             if not playable:
                 break
             card = playable[0]
@@ -205,7 +235,9 @@ class TestCombatEdgeCases:
                 args["target_index"] = state["enemies"][0]["index"]
             state = game.act("play_card", **args)
             plays += 1
-            assert state.get("type") != "error", f"Error after {plays} plays: {state.get('message')}"
+            assert state.get("type") != "error", (
+                f"Error after {plays} plays: {state.get('message')}"
+            )
 
         # With Pommel Strike + Bloodletting, should play many cards before enemy dies
         assert plays >= 5, f"Expected infinite loop plays >= 5, got {plays}"

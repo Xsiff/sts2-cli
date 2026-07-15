@@ -1,5 +1,5 @@
 """Tests for events."""
-import pytest
+
 
 
 class TestNeowEvent:
@@ -19,7 +19,7 @@ class TestNeowEvent:
         state = game.start(seed="ne3")
         for opt in state["options"]:
             if opt.get("vars"):
-                for k, v in opt["vars"].items():
+                for _k, v in opt["vars"].items():
                     assert isinstance(v, (int, float))
 
     def test_choose_neow(self, game):

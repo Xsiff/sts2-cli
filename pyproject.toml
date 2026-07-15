@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sts2-cli"
+version = "0.1.0"
+description = "CLI tooling for Slay the Spire 2."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "sts2-cli contributors" }]
+dependencies = []
+
+[dependency-groups]
+dev = [
+  "pytest",
+  "ruff",
+  "ty",
+]
+
+[tool.uv]
+package = false

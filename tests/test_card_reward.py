@@ -1,4 +1,5 @@
 """Tests for card rewards."""
+
 import pytest
 
 

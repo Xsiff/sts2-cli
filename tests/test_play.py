@@ -6,7 +6,6 @@ import importlib.util
 import pathlib
 import sys
 
-
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 PLAY_PATH = ROOT / "python" / "play.py"
 

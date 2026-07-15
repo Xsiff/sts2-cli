@@ -2,6 +2,7 @@
 """
 sts2-cli launcher: start a new game or load a save, then hand off to python/play.py.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -54,15 +55,17 @@ def _collect_save_entries() -> list[dict]:
             try:
                 with open(path, encoding="utf-8") as f:
                     data = json.load(f)
-                entries.append({
-                    "kind": "replay",
-                    "path": path,
-                    "name": name,
-                    "mtime": st.st_mtime,
-                    "character": data.get("character", "?"),
-                    "seed": data.get("seed", "?"),
-                    "actions": len(data.get("actions", [])),
-                })
+                entries.append(
+                    {
+                        "kind": "replay",
+                        "path": path,
+                        "name": name,
+                        "mtime": st.st_mtime,
+                        "character": data.get("character", "?"),
+                        "seed": data.get("seed", "?"),
+                        "actions": len(data.get("actions", [])),
+                    }
+                )
             except (json.JSONDecodeError, OSError):
                 pass
         elif name.endswith(".save"):
@@ -75,23 +78,27 @@ def _collect_save_entries() -> list[dict]:
                 players = data.get("players", [])
                 if players:
                     character_id = players[0].get("character_id", "?")
-                entries.append({
-                    "kind": "native",
-                    "path": path,
-                    "name": name,
-                    "mtime": st.st_mtime,
-                    "seed": seed,
-                    "ascension": ascension,
-                    "character_id": character_id,
-                })
+                entries.append(
+                    {
+                        "kind": "native",
+                        "path": path,
+                        "name": name,
+                        "mtime": st.st_mtime,
+                        "seed": seed,
+                        "ascension": ascension,
+                        "character_id": character_id,
+                    }
+                )
             except (json.JSONDecodeError, OSError):
-                entries.append({
-                    "kind": "native",
-                    "path": path,
-                    "name": name,
-                    "mtime": st.st_mtime,
-                    "broken": True,
-                })
+                entries.append(
+                    {
+                        "kind": "native",
+                        "path": path,
+                        "name": name,
+                        "mtime": st.st_mtime,
+                        "broken": True,
+                    }
+                )
     entries.sort(key=lambda item: -item["mtime"])
     return entries
 
