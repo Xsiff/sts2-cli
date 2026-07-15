@@ -21,6 +21,15 @@ cd sts2-cli
 
 Or just run `python3 python/play.py` — it auto-detects and sets up on first run.
 
+## Tests
+
+```bash
+UV_CACHE_DIR=/tmp/uv-cache uv sync --group dev
+UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/test_play.py
+```
+
+The GitHub Actions workflow runs the portable Python test on a hosted runner. The game-backed integration tests require a local Slay the Spire 2 installation and patched DLLs from `./setup.sh`, so they are intended for local runs.
+
 ## Play
 
 ```bash
