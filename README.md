@@ -24,11 +24,12 @@ Or just run `python3 python/play.py` — it auto-detects and sets up on first ru
 ## Tests
 
 ```bash
-UV_CACHE_DIR=/tmp/uv-cache uv sync --group dev
-UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/test_play.py
+uv sync --group dev
+dotnet build src/Sts2Headless/Sts2Headless.csproj --configuration Release
+STS2_GAME_DIR="$PWD/lib" STS2_LIB="$PWD/lib" uv run pytest
 ```
 
-The GitHub Actions workflow runs the portable Python test on a hosted runner. The game-backed integration tests require a local Slay the Spire 2 installation and patched DLLs from `./setup.sh`, so they are intended for local runs.
+These tests require the proprietary game DLLs in `lib/`. If you need to refresh those local files, use `./setup.sh`.
 
 ## Play
 

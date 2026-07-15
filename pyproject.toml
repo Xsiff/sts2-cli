@@ -21,3 +21,8 @@ dev = [
 
 [tool.uv]
 package = false
+
+[tool.pytest.ini_options]
+markers = [
+  "slow: long-running integration coverage",
+]
