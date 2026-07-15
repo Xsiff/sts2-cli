@@ -4,9 +4,6 @@ on:
   push:
   pull_request:
 
-env:
-  UV_CACHE_DIR: ${{ runner.temp }}/uv-cache
-
 jobs:
   pytest:
     runs-on: ubuntu-latest
@@ -24,7 +21,11 @@ jobs:
         uses: astral-sh/setup-uv@v5
 
       - name: Install dependencies
+        env:
+          UV_CACHE_DIR: /tmp/uv-cache
         run: uv sync --group dev
 
       - name: Run portable test suite
+        env:
+          UV_CACHE_DIR: /tmp/uv-cache
         run: uv run pytest tests/test_play.py
