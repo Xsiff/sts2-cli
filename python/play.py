@@ -714,6 +714,49 @@ def show_player(p, show_deck=False):
                 print_card_detail_extension(cd, indent="      ")
 
 
+def show_combat_deck_state(state):
+    deck_state = state.get("deck_state") or {}
+    if not deck_state:
+        print(f"  {t('Current deck state not available.')}")
+        return
+
+    print(f"  {c(t('Current deck state:'), 'bold')}")
+    print(
+        f"    {t('Hand')} {deck_state.get('hand_count', 0)}  "
+        f"{t('Draw')} {deck_state.get('draw_pile_count', 0)}  "
+        f"{t('Discard')} {deck_state.get('discard_pile_count', 0)}  "
+        f"{t('Exhaust')} {deck_state.get('exhaust_pile_count', 0)}"
+    )
+
+    pile_specs = [
+        ("hand", t("Hand")),
+        ("draw_pile", t("Draw pile")),
+        ("discard_pile", t("Discard pile")),
+        ("exhaust_pile", t("Exhaust pile")),
+    ]
+    for pile_key, pile_label in pile_specs:
+        cards = deck_state.get(pile_key) or []
+        print(f"  {c(pile_label + ':', 'bold')}")
+        if not cards:
+            print(f"    {c(t('(empty)'), 'dim')}")
+            continue
+        for cd in cards:
+            up = c("+", "green") if cd.get("upgraded") else ""
+            ctype_label = CARD_TYPE_LABELS.get(cd.get("type", ""), cd.get("type", ""))
+            _pre, suf = split_card_keywords(cd.get("keywords"))
+            suf_part = format_card_suffix_keywords(suf)
+            rare = cd.get("rarity")
+            rare_part = f" {c(t(rare, RARITY_LABELS.get(rare, rare)), 'dim')}" if rare else ""
+            star_cost = cd.get("star_cost")
+            star_part = f" ★{star_cost}" if star_cost else ""
+            print(
+                f"    [{cd.get('index', '?')}] {n(cd.get('name', '?'))}{up} "
+                f"({cd.get('cost', '?')}){star_part} "
+                f"{c(t(cd.get('type', ''), ctype_label), 'dim')}{rare_part}{suf_part}"
+            )
+            print_card_detail_extension(cd, indent="      ")
+
+
 def show_combat(state):
     rnd = state.get("round", 0)
     energy = state.get("energy", 0)
@@ -1407,7 +1450,8 @@ def get_input(prompt, valid_options=None, state=None, multi_select=False, multi_
 
   {c("Actions:", "bold")}
     Map:     path number (0, 1, 2)
-    Combat:  card index / {c("e", "yellow")} end turn / {c("p0", "yellow")} use potion
+    Combat:  card index / {c("e", "yellow")} end turn / {c("p0", "yellow")} use potion /
+             {c("deck", "yellow")} current deck
     Reward:  card index / {c("s", "yellow")} skip
     Multi:   when prompted for N–M cards (or 0–M optional),
              comma-separate indices, e.g. {c("0,1,2", "yellow")}
@@ -1419,8 +1463,11 @@ def get_input(prompt, valid_options=None, state=None, multi_select=False, multi_
 """)
             continue
         if raw == "deck" and state:
-            p = state.get("player", {})
-            show_player(p, show_deck=True)
+            if state.get("decision") == "combat_play":
+                show_combat_deck_state(state)
+            else:
+                p = state.get("player", {})
+                show_player(p, show_deck=True)
             continue
         if raw == "potions" and state:
             p = state.get("player", {})
@@ -1884,12 +1931,21 @@ def play(
                         _auto_stuck_count = 0
                 else:
                     choice = get_input(
-                        t("Play card [index], (e)nd turn, (p0) potion"),
+                        t("Play card [index], (e)nd turn, (p0) potion, (deck) current deck"),
                         set(valid.keys()) | {"help"},
                         state=state,
                     )
                     if choice == "help":
-                        print(f"  {t('Enter card index, e=end turn, p0=use potion 0')}")
+                        print(
+                            f"{
+                                t(
+                                    'Enter card index, '
+                                    'e=end turn, '
+                                    'p0=use potion 0, '
+                                    'deck=current deck'
+                                )
+                            }"
+                        )
                         continue
 
                 if choice == "e":

@@ -313,52 +313,7 @@ public partial class RunSimulator
         if (player.Creature != null && player.Creature.CurrentHp > 0)
             _lastKnownHp = player.Creature.CurrentHp;
 
-        var hand = pcs?.Hand?.Cards?.Select((c, i) =>
-        {
-            var stats = new Dictionary<string, object?>();
-            try
-            {
-                foreach (var dv in c.DynamicVars.Values)
-                {
-                    stats[dv.Name.ToLowerInvariant()] = (int)dv.BaseValue;
-                }
-            }
-            catch { }
-
-            var starCost = c.CurrentStarCost;
-            var cardInfo = new Dictionary<string, object?>
-            {
-                ["index"] = i,
-                ["id"] = c.Id.ToString(),
-                ["name"] = _loc.Card(c.Id.Entry),
-                ["cost"] = c.EnergyCost?.GetResolved() ?? 0,
-                ["type"] = c.Type.ToString(),
-                ["rarity"] = c.Rarity.ToString(),
-                ["can_play"] = c.CanPlay(out _, out _),
-                ["target_type"] = c.TargetType.ToString(),
-                ["stats"] = stats.Count > 0 ? stats : null,
-                ["description"] = _loc.Localized("cards", c.Id.Entry + ".description"),
-            };
-            if (starCost > 0)
-            {
-                cardInfo["star_cost"] = starCost;
-                if (pcs != null && pcs.Stars < starCost)
-                    cardInfo["can_play"] = false;
-            }
-            var kws = c.Keywords?.Where(k => k != CardKeyword.None).Select(k => k.ToString()).ToList();
-            if (kws?.Count > 0) cardInfo["keywords"] = kws;
-            if (c.Enchantment != null)
-            {
-                cardInfo["enchantment"] = _loc.Localized("enchantments", c.Enchantment.Id.Entry + ".title");
-                try { if (c.Enchantment.Amount != 0) cardInfo["enchantment_amount"] = c.Enchantment.Amount; } catch { }
-            }
-            if (c.Affliction != null)
-            {
-                cardInfo["affliction"] = _loc.Localized("afflictions", c.Affliction.Id.Entry + ".title");
-                try { if (c.Affliction.Amount != 0) cardInfo["affliction_amount"] = c.Affliction.Amount; } catch { }
-            }
-            return cardInfo;
-        }).ToList() ?? new();
+        var hand = BuildCombatCardList(pcs?.Hand?.Cards, includeCanPlay: true, pcs);
 
         var playerCreatures = combatState?.PlayerCreatures?.ToList();
 
@@ -433,6 +388,17 @@ public partial class RunSimulator
             ["player_powers"] = playerPowers?.Count > 0 ? playerPowers : null,
             ["draw_pile_count"] = pcs?.DrawPile?.Cards?.Count ?? 0,
             ["discard_pile_count"] = pcs?.DiscardPile?.Cards?.Count ?? 0,
+            ["deck_state"] = new Dictionary<string, object?>
+            {
+                ["hand_count"] = pcs?.Hand?.Cards?.Count ?? 0,
+                ["draw_pile_count"] = pcs?.DrawPile?.Cards?.Count ?? 0,
+                ["discard_pile_count"] = pcs?.DiscardPile?.Cards?.Count ?? 0,
+                ["exhaust_pile_count"] = GetCombatPileCount(pcs, "ExhaustPile"),
+                ["hand"] = hand,
+                ["draw_pile"] = BuildCombatCardList(pcs?.DrawPile?.Cards, includeCanPlay: false, pcs: null),
+                ["discard_pile"] = BuildCombatCardList(pcs?.DiscardPile?.Cards, includeCanPlay: false, pcs: null),
+                ["exhaust_pile"] = BuildCombatCardList(GetCombatPileCards(pcs, "ExhaustPile"), includeCanPlay: false, pcs: null),
+            },
         };
 
         try
@@ -479,6 +445,86 @@ public partial class RunSimulator
         }
 
         return result;
+    }
+
+    private List<Dictionary<string, object?>> BuildCombatCardList(
+        IEnumerable<CardModel>? cards,
+        bool includeCanPlay,
+        PlayerCombatState? pcs)
+    {
+        return cards?.Select((c, i) => BuildCombatCardInfo(c, i, includeCanPlay, pcs)).ToList() ?? new();
+    }
+
+    private Dictionary<string, object?> BuildCombatCardInfo(
+        CardModel c,
+        int index,
+        bool includeCanPlay,
+        PlayerCombatState? pcs)
+    {
+        var stats = new Dictionary<string, object?>();
+        try
+        {
+            foreach (var dv in c.DynamicVars.Values)
+                stats[dv.Name.ToLowerInvariant()] = (int)dv.BaseValue;
+        }
+        catch { }
+
+        var cardInfo = new Dictionary<string, object?>
+        {
+            ["index"] = index,
+            ["id"] = c.Id.ToString(),
+            ["name"] = _loc.Card(c.Id.Entry),
+            ["cost"] = c.EnergyCost?.GetResolved() ?? 0,
+            ["type"] = c.Type.ToString(),
+            ["rarity"] = c.Rarity.ToString(),
+            ["target_type"] = c.TargetType.ToString(),
+            ["upgraded"] = c.IsUpgraded,
+            ["description"] = _loc.Localized("cards", c.Id.Entry + ".description"),
+            ["stats"] = stats.Count > 0 ? stats : null,
+        };
+
+        if (includeCanPlay)
+            cardInfo["can_play"] = c.CanPlay(out _, out _);
+
+        var starCost = c.CurrentStarCost;
+        if (starCost > 0)
+        {
+            cardInfo["star_cost"] = starCost;
+            if (includeCanPlay && pcs != null && pcs.Stars < starCost)
+                cardInfo["can_play"] = false;
+        }
+
+        var kws = c.Keywords?.Where(k => k != CardKeyword.None).Select(k => k.ToString()).ToList();
+        if (kws?.Count > 0) cardInfo["keywords"] = kws;
+
+        if (c.Enchantment != null)
+        {
+            cardInfo["enchantment"] = _loc.Localized("enchantments", c.Enchantment.Id.Entry + ".title");
+            try { if (c.Enchantment.Amount != 0) cardInfo["enchantment_amount"] = c.Enchantment.Amount; } catch { }
+        }
+
+        if (c.Affliction != null)
+        {
+            cardInfo["affliction"] = _loc.Localized("afflictions", c.Affliction.Id.Entry + ".title");
+            try { if (c.Affliction.Amount != 0) cardInfo["affliction_amount"] = c.Affliction.Amount; } catch { }
+        }
+
+        return cardInfo;
+    }
+
+    private IEnumerable<CardModel>? GetCombatPileCards(PlayerCombatState? pcs, string pilePropertyName)
+    {
+        var pile = pcs?.GetType().GetProperty(pilePropertyName)?.GetValue(pcs);
+        if (pile == null)
+            return null;
+
+        var cardsProp = pile.GetType().GetProperty("Cards");
+        return cardsProp?.GetValue(pile) as IEnumerable<CardModel>;
+    }
+
+    private int GetCombatPileCount(PlayerCombatState? pcs, string pilePropertyName)
+    {
+        return GetCombatPileCards(pcs, pilePropertyName)?.Count() ?? 0;
     }
 
     private Dictionary<string, object?> DetectPostCombatState(Player player, CombatRoom combatRoom)
